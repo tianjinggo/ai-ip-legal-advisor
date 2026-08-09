@@ -1,0 +1,13 @@
+{
+  "name": "ai-ip-legal-advisor",
+  "version": "1.0.0",
+  "description": "AI 知识产权侵权风险评估与法律分析报告生成工具",
+  "main": "generate_report.js",
+  "scripts": {
+    "generate": "node generate_report.js"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "xmlbuilder2": "^4.0.3"
+  }
+}

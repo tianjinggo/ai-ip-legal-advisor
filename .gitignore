@@ -1,0 +1,7 @@
+node_modules/
+test_output.docx
+test_output.zip
+test_report.docx
+test_report.json
+demo_report_*.json
+demo_report_*.docx
