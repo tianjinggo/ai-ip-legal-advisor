@@ -4,7 +4,11 @@
   "description": "AI 知识产权侵权风险评估与法律分析报告生成工具",
   "main": "generate_report.js",
   "scripts": {
-    "generate": "node generate_report.js"
+    "generate": "node generate_report.js",
+    "test": "node --test test/generate_report.test.js"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "jszip": "^3.10.1",

@@ -15,7 +15,7 @@
 | 模式 | 依赖 | 说明 |
 |------|------|------|
 | **咨询模式** | 无外部依赖 | 纯文本四段式回答，任意环境可用 |
-| **报告生成模式** | Node.js >= 14 | 生成 .docx Word 报告，需先安装依赖 |
+| **报告生成模式** | Node.js >= 20 | 生成 .docx Word 报告，需先安装依赖（xmlbuilder2 4.x 要求 Node.js >= 20） |
 
 ## 安装与快速开始
 
@@ -32,6 +32,9 @@ node generate_report.js <input_json> <output_docx>
 
 # 示例
 node generate_report.js demo_report.json demo_report.docx
+
+# 4. 运行自检（校验中文字体、页眉页脚与依赖提示）
+npm test
 ```
 
 > **注意**：如果只使用咨询模式（纯文本问答），无需执行 `npm install`，直接在 Agent 中加载本 Skill 即可。
@@ -71,7 +74,7 @@ node generate_report.js demo_report.json demo_report.docx
 
 ## 技术栈
 
-- Node.js >= 14
+- Node.js >= 20
 - [xmlbuilder2](https://github.com/oozcitak/xmlbuilder2) — XML/OpenXML 构建
 - [JSZip](https://stuk.github.io/jszip/) — 生成 .docx 压缩包
 
