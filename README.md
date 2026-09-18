@@ -10,18 +10,31 @@
 - **判例与法规引用**：准确引用标志性判例（北京互联网法院"AI文生图"案、纽约时报诉 OpenAI 案等）
 - **双模式输出**：即时咨询模式（四段式回答）+ 正式报告模式（9 章完整法律意见书）
 
-## 快速开始
+## 环境要求
+
+| 模式 | 依赖 | 说明 |
+|------|------|------|
+| **咨询模式** | 无外部依赖 | 纯文本四段式回答，任意环境可用 |
+| **报告生成模式** | Node.js >= 14 | 生成 .docx Word 报告，需先安装依赖 |
+
+## 安装与快速开始
 
 ```bash
-# 1. 安装依赖
+# 1. 克隆仓库
+git clone https://github.com/tianjinggo/ai-ip-legal-advisor.git
+cd ai-ip-legal-advisor
+
+# 2. 安装依赖（仅报告生成模式需要）
 npm install
 
-# 2. 生成法律分析报告
+# 3. 生成法律分析报告
 node generate_report.js <input_json> <output_docx>
 
 # 示例
 node generate_report.js demo_report.json demo_report.docx
 ```
+
+> **注意**：如果只使用咨询模式（纯文本问答），无需执行 `npm install`，直接在 Agent 中加载本 Skill 即可。
 
 ## JSON 数据结构
 
@@ -41,10 +54,10 @@ node generate_report.js demo_report.json demo_report.docx
 
 ## 报告特性
 
-- 中文宋体/黑体排版
+- 中文宋体/黑体排版（正文宋体，标题黑体）
 - 封面元信息 + 目录
-- 风险矩阵、法律依据清单、合规建议表采用专业网格表格
-- 页眉/页脚（报告标题 + 页码）
+- 页眉显示报告标题，页脚显示页码（第 X 页 / 共 Y 页）
+- 风险矩阵、法律依据清单、合规建议表采用专业网格表格（表头灰底加粗）
 - 标准法律免责声明
 
 ## 适用场景
@@ -58,7 +71,7 @@ node generate_report.js demo_report.json demo_report.docx
 
 ## 技术栈
 
-- Node.js
+- Node.js >= 14
 - [xmlbuilder2](https://github.com/oozcitak/xmlbuilder2) — XML/OpenXML 构建
 - [JSZip](https://stuk.github.io/jszip/) — 生成 .docx 压缩包
 
