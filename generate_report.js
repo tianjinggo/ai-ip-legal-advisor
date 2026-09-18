@@ -1,8 +1,19 @@
 const fs = require('fs');
-const { create } = require('xmlbuilder2');
-const JSZip = require('jszip');
+
+function requireDependency(name) {
+    try {
+        return require(name);
+    } catch (error) {
+        if (error.code === 'MODULE_NOT_FOUND') {
+            throw new Error(`缺少报告生成依赖 ${name}，请先在 skill 目录执行 npm install。`);
+        }
+        throw error;
+    }
+}
 
 async function createDocx(data, outputPath) {
+    const { create } = requireDependency('xmlbuilder2');
+    const JSZip = requireDependency('jszip');
     const zip = new JSZip();
     const reportTitle = 'AI 知识产权法律分析报告';
 
@@ -200,7 +211,10 @@ async function createDocx(data, outputPath) {
 
     // ===== word/document.xml =====
     const documentXml = create({ version: '1.0', encoding: 'UTF-8' })
-        .ele('w:document', { 'xmlns:w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main' })
+        .ele('w:document', {
+            'xmlns:w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+            'xmlns:r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+        })
             .ele('w:body');
 
     // 报告标题
@@ -230,15 +244,15 @@ async function createDocx(data, outputPath) {
     ];
 
     const coverTable = documentXml.ele('w:tbl');
-    coverTable.ele('w:tblPr').ele('w:tblW', { 'w:w': '9000', 'w:type': 'dxa' }).up().up();
-    coverTable.ele('w:tblBorders')
+    const coverTableProperties = coverTable.ele('w:tblPr');
+    coverTableProperties.ele('w:tblW', { 'w:w': '9000', 'w:type': 'dxa' });
+    coverTableProperties.ele('w:tblBorders')
         .ele('w:top', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .ele('w:left', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .ele('w:bottom', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .ele('w:right', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .ele('w:insideH', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
-        .ele('w:insideV', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
-        .up();
+        .ele('w:insideV', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' });
 
     coverData.forEach(row => {
         const tr = coverTable.ele('w:tr');
@@ -459,15 +473,15 @@ function addParagraph(parent, text) {
 
 function createTable(parent, headers, rows) {
     const tbl = parent.ele('w:tbl');
-    tbl.ele('w:tblPr').ele('w:tblW', { 'w:w': '9000', 'w:type': 'dxa' }).up().up();
-    tbl.ele('w:tblBorders')
+    const tableProperties = tbl.ele('w:tblPr');
+    tableProperties.ele('w:tblW', { 'w:w': '9000', 'w:type': 'dxa' });
+    tableProperties.ele('w:tblBorders')
         .ele('w:top', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .ele('w:left', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .ele('w:bottom', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .ele('w:right', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .ele('w:insideH', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
-        .ele('w:insideV', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
-        .up();
+        .ele('w:insideV', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' });
 
     // 表头行（灰色底）
     const headerRow = tbl.ele('w:tr');
@@ -491,18 +505,27 @@ function createTable(parent, headers, rows) {
     });
 }
 
-if (process.argv.length !== 4) {
-    console.log('用法: node generate_report.js <input_json> <output_docx>');
-    process.exit(1);
+async function main() {
+    if (process.argv.length !== 4) {
+        console.log('用法: node generate_report.js <input_json> <output_docx>');
+        process.exitCode = 1;
+        return;
+    }
+
+    const inputJson = process.argv[2];
+    const outputDocx = process.argv[3];
+
+    try {
+        const data = JSON.parse(fs.readFileSync(inputJson, 'utf-8'));
+        await createDocx(data, outputDocx);
+    } catch (error) {
+        console.error(`生成报告时出错：${error.message}`);
+        process.exitCode = 1;
+    }
 }
 
-const inputJson = process.argv[2];
-const outputDocx = process.argv[3];
-
-try {
-    const data = JSON.parse(fs.readFileSync(inputJson, 'utf-8'));
-    createDocx(data, outputDocx);
-} catch (err) {
-    console.error(`读取输入文件时出错：${err}`);
-    process.exit(1);
+if (require.main === module) {
+    main();
 }
+
+module.exports = { createDocx };
