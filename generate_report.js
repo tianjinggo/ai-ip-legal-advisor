@@ -4,17 +4,22 @@ const JSZip = require('jszip');
 
 async function createDocx(data, outputPath) {
     const zip = new JSZip();
+    const reportTitle = 'AI 知识产权法律分析报告';
 
+    // ===== [Content_Types].xml =====
     const contentTypesXml = create({ version: '1.0', encoding: 'UTF-8' })
         .ele('Types', { xmlns: 'http://schemas.openxmlformats.org/package/2006/content-types' })
             .ele('Default', { Extension: 'rels', ContentType: 'application/vnd.openxmlformats-package.relationships+xml' }).up()
             .ele('Default', { Extension: 'xml', ContentType: 'application/xml' }).up()
             .ele('Override', { PartName: '/word/document.xml', ContentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml' }).up()
             .ele('Override', { PartName: '/word/styles.xml', ContentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml' }).up()
+            .ele('Override', { PartName: '/word/header1.xml', ContentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml' }).up()
+            .ele('Override', { PartName: '/word/footer1.xml', ContentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml' }).up()
         .end({ prettyPrint: true });
 
     zip.file('[Content_Types].xml', Buffer.from(contentTypesXml, 'utf-8'));
 
+    // ===== _rels/.rels =====
     const relsXml = create({ version: '1.0', encoding: 'UTF-8' })
         .ele('Relationships', { xmlns: 'http://schemas.openxmlformats.org/package/2006/relationships' })
             .ele('Relationship', { Id: 'rId1', Type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument', Target: 'word/document.xml' }).up()
@@ -22,47 +27,199 @@ async function createDocx(data, outputPath) {
 
     zip.file('_rels/.rels', Buffer.from(relsXml, 'utf-8'));
 
+    // ===== word/styles.xml（含中文字体设置） =====
     const stylesXml = create({ version: '1.0', encoding: 'UTF-8' })
         .ele('w:styles', { 'xmlns:w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main' })
             .ele('w:docDefaults')
                 .ele('w:rPrDefault')
-                    .ele('w:rPr').up().up()
+                    .ele('w:rPr')
+                        .ele('w:rFonts', {
+                            'w:ascii': 'Times New Roman',
+                            'w:hAnsi': 'Times New Roman',
+                            'w:eastAsia': '宋体',
+                            'w:cs': 'Times New Roman'
+                        }).up()
+                        .ele('w:sz', { 'w:val': '21' }).up()
+                        .ele('w:szCs', { 'w:val': '21' }).up()
+                    .up()
+                .up()
                 .ele('w:pPrDefault')
-                    .ele('w:pPr').up().up().up()
+                    .ele('w:pPr').up()
+                .up()
+            .up()
+            // Normal 样式
+            .ele('w:style', { 'w:type': 'paragraph', 'w:default': '1', 'w:styleId': 'Normal' })
+                .ele('w:name', { 'w:val': 'Normal' }).up()
+                .ele('w:qFormat').up()
+                .ele('w:pPr')
+                    .ele('w:spacing', { 'w:after': '120', 'w:line': '360', 'w:lineRule': 'auto' }).up()
+                .up()
+                .ele('w:rPr')
+                    .ele('w:rFonts', {
+                        'w:ascii': 'Times New Roman',
+                        'w:hAnsi': 'Times New Roman',
+                        'w:eastAsia': '宋体'
+                    }).up()
+                    .ele('w:sz', { 'w:val': '21' }).up()
+                .up()
+            .up()
+            // Heading 1 样式（黑体）
             .ele('w:style', { 'w:type': 'paragraph', 'w:styleId': 'Heading1' })
                 .ele('w:name', { 'w:val': 'Heading 1' }).up()
                 .ele('w:basedOn', { 'w:val': 'Normal' }).up()
                 .ele('w:next', { 'w:val': 'Normal' }).up()
+                .ele('w:qFormat').up()
                 .ele('w:pPr')
-                    .ele('w:spacing', { 'w:after': '200', 'w:before': '0' }).up().up()
+                    .ele('w:keepNext').up()
+                    .ele('w:spacing', { 'w:before': '360', 'w:after': '200' }).up()
+                .up()
                 .ele('w:rPr')
+                    .ele('w:rFonts', {
+                        'w:ascii': 'Arial',
+                        'w:hAnsi': 'Arial',
+                        'w:eastAsia': '黑体'
+                    }).up()
                     .ele('w:b', { 'w:val': 'true' }).up()
-                    .ele('w:sz', { 'w:val': '28' }).up().up().up()
+                    .ele('w:sz', { 'w:val': '32' }).up()
+                    .ele('w:szCs', { 'w:val': '32' }).up()
+                .up()
+            .up()
+            // Heading 2 样式（黑体）
             .ele('w:style', { 'w:type': 'paragraph', 'w:styleId': 'Heading2' })
                 .ele('w:name', { 'w:val': 'Heading 2' }).up()
                 .ele('w:basedOn', { 'w:val': 'Normal' }).up()
                 .ele('w:next', { 'w:val': 'Normal' }).up()
+                .ele('w:qFormat').up()
                 .ele('w:pPr')
-                    .ele('w:spacing', { 'w:after': '150', 'w:before': '0' }).up().up()
+                    .ele('w:keepNext').up()
+                    .ele('w:spacing', { 'w:before': '240', 'w:after': '150' }).up()
+                .up()
                 .ele('w:rPr')
+                    .ele('w:rFonts', {
+                        'w:ascii': 'Arial',
+                        'w:hAnsi': 'Arial',
+                        'w:eastAsia': '黑体'
+                    }).up()
                     .ele('w:b', { 'w:val': 'true' }).up()
-                    .ele('w:sz', { 'w:val': '24' }).up().up().up()
+                    .ele('w:sz', { 'w:val': '28' }).up()
+                    .ele('w:szCs', { 'w:val': '28' }).up()
+                .up()
+            .up()
         .end({ prettyPrint: true });
 
     zip.file('word/styles.xml', Buffer.from(stylesXml, 'utf-8'));
 
+    // ===== word/header1.xml（页眉） =====
+    const headerXml = create({ version: '1.0', encoding: 'UTF-8' })
+        .ele('w:hdr', {
+            'xmlns:w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+            'w:type': 'default'
+        })
+            .ele('w:p')
+                .ele('w:pPr')
+                    .ele('w:pStyle', { 'w:val': 'Header' }).up()
+                    .ele('w:jc', { 'w:val': 'right' }).up()
+                    .ele('w:pBdr')
+                        .ele('w:bottom', {
+                            'w:val': 'single', 'w:sz': '6', 'w:space': '1', 'w:color': '999999'
+                        }).up()
+                    .up()
+                .up()
+                .ele('w:r')
+                    .ele('w:rPr')
+                        .ele('w:rFonts', { 'w:eastAsia': '宋体' }).up()
+                        .ele('w:sz', { 'w:val': '18' }).up()
+                        .ele('w:color', { 'w:val': '666666' }).up()
+                    .up()
+                    .ele('w:t', { 'xml:space': 'preserve' }).txt(reportTitle).up()
+                .up()
+            .up()
+        .end({ prettyPrint: true });
+
+    zip.file('word/header1.xml', Buffer.from(headerXml, 'utf-8'));
+
+    // ===== word/footer1.xml（页脚，含页码） =====
+    const footerXml = create({ version: '1.0', encoding: 'UTF-8' })
+        .ele('w:ftr', {
+            'xmlns:w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+            'w:type': 'default'
+        })
+            .ele('w:p')
+                .ele('w:pPr')
+                    .ele('w:pStyle', { 'w:val': 'Footer' }).up()
+                    .ele('w:jc', { 'w:val': 'center' }).up()
+                .up()
+                .ele('w:r')
+                    .ele('w:rPr')
+                        .ele('w:rFonts', { 'w:eastAsia': '宋体' }).up()
+                        .ele('w:sz', { 'w:val': '18' }).up()
+                        .ele('w:color', { 'w:val': '666666' }).up()
+                    .up()
+                    .ele('w:t', { 'xml:space': 'preserve' }).txt('第 ').up()
+                .up()
+                // PAGE 字段
+                .ele('w:r')
+                    .ele('w:fldChar', { 'w:fldCharType': 'begin' }).up()
+                .up()
+                .ele('w:r')
+                    .ele('w:instrText', { 'xml:space': 'preserve' }).txt(' PAGE ').up()
+                .up()
+                .ele('w:r')
+                    .ele('w:fldChar', { 'w:fldCharType': 'end' }).up()
+                .up()
+                .ele('w:r')
+                    .ele('w:rPr')
+                        .ele('w:rFonts', { 'w:eastAsia': '宋体' }).up()
+                        .ele('w:sz', { 'w:val': '18' }).up()
+                        .ele('w:color', { 'w:val': '666666' }).up()
+                    .up()
+                    .ele('w:t', { 'xml:space': 'preserve' }).txt(' 页 / 共 ').up()
+                .up()
+                // NUMPAGES 字段
+                .ele('w:r')
+                    .ele('w:fldChar', { 'w:fldCharType': 'begin' }).up()
+                .up()
+                .ele('w:r')
+                    .ele('w:instrText', { 'xml:space': 'preserve' }).txt(' NUMPAGES ').up()
+                .up()
+                .ele('w:r')
+                    .ele('w:fldChar', { 'w:fldCharType': 'end' }).up()
+                .up()
+                .ele('w:r')
+                    .ele('w:rPr')
+                        .ele('w:rFonts', { 'w:eastAsia': '宋体' }).up()
+                        .ele('w:sz', { 'w:val': '18' }).up()
+                        .ele('w:color', { 'w:val': '666666' }).up()
+                    .up()
+                    .ele('w:t', { 'xml:space': 'preserve' }).txt(' 页').up()
+                .up()
+            .up()
+        .end({ prettyPrint: true });
+
+    zip.file('word/footer1.xml', Buffer.from(footerXml, 'utf-8'));
+
+    // ===== word/document.xml =====
     const documentXml = create({ version: '1.0', encoding: 'UTF-8' })
         .ele('w:document', { 'xmlns:w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main' })
             .ele('w:body');
 
-    documentXml.ele('w:p')
-        .ele('w:r')
-        .ele('w:t', { 'xml:space': 'preserve' }).txt('AI 知识产权法律分析报告').up()
+    // 报告标题
+    const titleP = documentXml.ele('w:p');
+    titleP.ele('w:pPr')
+        .ele('w:jc', { 'w:val': 'center' }).up()
+        .up();
+    titleP.ele('w:r')
+        .ele('w:rPr')
+            .ele('w:rFonts', { 'w:eastAsia': '黑体' }).up()
+            .ele('w:b', { 'w:val': 'true' }).up()
+            .ele('w:sz', { 'w:val': '36' }).up()
         .up()
+        .ele('w:t', { 'xml:space': 'preserve' }).txt(reportTitle).up()
         .up();
 
     documentXml.ele('w:p').up();
 
+    // 封面信息表
     const coverData = [
         ['报告编号', data.report_number || ''],
         ['报告日期', data.report_date || ''],
@@ -85,8 +242,11 @@ async function createDocx(data, outputPath) {
 
     coverData.forEach(row => {
         const tr = coverTable.ele('w:tr');
-        row.forEach(cellText => {
+        row.forEach((cellText, idx) => {
             const tc = tr.ele('w:tc');
+            if (idx === 0) {
+                tc.ele('w:tcPr').ele('w:shd', { 'w:val': 'clear', 'w:color': 'auto', 'w:fill': 'F2F2F2' }).up().up();
+            }
             tc.ele('w:p')
                 .ele('w:r')
                 .ele('w:t', { 'xml:space': 'preserve' }).txt(cellText).up()
@@ -95,8 +255,10 @@ async function createDocx(data, outputPath) {
         });
     });
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 目录
     addHeading(documentXml, '目录');
 
     const tocItems = [
@@ -107,8 +269,10 @@ async function createDocx(data, outputPath) {
         addParagraph(documentXml, item);
     });
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 1. 摘要
     addHeading(documentXml, '1. 摘要（Executive Summary）');
 
     if (data.summary) {
@@ -121,8 +285,10 @@ async function createDocx(data, outputPath) {
         }
     }
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 2. 背景事实
     addHeading(documentXml, '2. 背景事实（Facts）');
 
     if (data.background) {
@@ -141,8 +307,10 @@ async function createDocx(data, outputPath) {
         }
     }
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 3. 核心争议焦点
     addHeading(documentXml, '3. 核心争议焦点（Issues）');
 
     if (data.issues && data.issues.length > 0) {
@@ -155,8 +323,10 @@ async function createDocx(data, outputPath) {
         addParagraph(documentXml, '无');
     }
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 4. 法律分析与适用
     addHeading(documentXml, '4. 法律分析与适用（Legal Analysis）');
 
     if (data.legal_analysis && data.legal_analysis.length > 0) {
@@ -170,8 +340,10 @@ async function createDocx(data, outputPath) {
         addParagraph(documentXml, '无');
     }
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 5. 法律依据清单
     addHeading(documentXml, '5. 法律依据清单（Legal Basis）');
 
     if (data.legal_basis && data.legal_basis.length > 0) {
@@ -185,8 +357,10 @@ async function createDocx(data, outputPath) {
         addParagraph(documentXml, '无');
     }
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 6. 风险评估矩阵
     addHeading(documentXml, '6. 风险评估矩阵（Risk Assessment Matrix）');
 
     if (data.risks && data.risks.length > 0) {
@@ -204,8 +378,10 @@ async function createDocx(data, outputPath) {
         addParagraph(documentXml, '无');
     }
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 7. 合规建议
     addHeading(documentXml, '7. 合规建议（Compliance Recommendations）');
 
     if (data.recommendations && data.recommendations.length > 0) {
@@ -220,27 +396,42 @@ async function createDocx(data, outputPath) {
         addParagraph(documentXml, '无');
     }
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 8. 结论
     addHeading(documentXml, '8. 结论（Conclusion）');
 
     addParagraph(documentXml, data.conclusion || '');
 
+    // 分页
     documentXml.ele('w:p').ele('w:r').ele('w:br', { 'w:type': 'page' }).up().up().up();
 
+    // 9. 免责声明
     addHeading(documentXml, '9. 免责声明（Disclaimer）');
 
     const disclaimerText = data.disclaimer || '本报告仅供内部法律分析参考使用，不构成正式的律师法律意见。AI 领域的法律法规与司法实践处于快速发展期，本报告基于当前公开信息编制，相关结论可能因法律更新或事实变化而调整。建议在具体决策前咨询专业知识产权律师。';
     addParagraph(documentXml, disclaimerText);
 
-    documentXml.ele('w:sectPr').up().up().up();
+    // sectPr（引用页眉页脚）
+    const sectPr = documentXml.ele('w:sectPr');
+    sectPr.ele('w:headerReference', { 'w:type': 'default', 'r:id': 'rId3' }).up();
+    sectPr.ele('w:footerReference', { 'w:type': 'default', 'r:id': 'rId4' }).up();
+    sectPr.ele('w:pgSz', { 'w:w': '11906', 'w:h': '16838' }).up();
+    sectPr.ele('w:pgMar', {
+        'w:top': '1440', 'w:right': '1440', 'w:bottom': '1440', 'w:left': '1440',
+        'w:header': '720', 'w:footer': '720', 'w:gutter': '0'
+    }).up();
 
     const docXml = documentXml.end({ prettyPrint: true });
     zip.file('word/document.xml', Buffer.from(docXml, 'utf-8'));
 
+    // ===== word/_rels/document.xml.rels（含 header/footer 关系） =====
     const docRelsXml = create({ version: '1.0', encoding: 'UTF-8' })
         .ele('Relationships', { xmlns: 'http://schemas.openxmlformats.org/package/2006/relationships' })
             .ele('Relationship', { Id: 'rId2', Type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles', Target: 'styles.xml' }).up()
+            .ele('Relationship', { Id: 'rId3', Type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/header', Target: 'header1.xml' }).up()
+            .ele('Relationship', { Id: 'rId4', Type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer', Target: 'footer1.xml' }).up()
         .end({ prettyPrint: true });
 
     zip.file('word/_rels/document.xml.rels', Buffer.from(docRelsXml, 'utf-8'));
@@ -278,10 +469,17 @@ function createTable(parent, headers, rows) {
         .ele('w:insideV', { 'w:val': 'single', 'w:sz': '4', 'w:space': '0', 'w:color': '000000' }).up()
         .up();
 
+    // 表头行（灰色底）
     const headerRow = tbl.ele('w:tr');
     headers.forEach(header => {
         const tc = headerRow.ele('w:tc');
-        tc.ele('w:p').ele('w:r').ele('w:t', { 'xml:space': 'preserve' }).txt(header).up().up().up();
+        tc.ele('w:tcPr').ele('w:shd', { 'w:val': 'clear', 'w:color': 'auto', 'w:fill': 'D9E2F3' }).up().up();
+        tc.ele('w:p')
+            .ele('w:r')
+            .ele('w:rPr').ele('w:b', { 'w:val': 'true' }).up().up()
+            .ele('w:t', { 'xml:space': 'preserve' }).txt(header).up()
+            .up()
+            .up();
     });
 
     rows.forEach(row => {
